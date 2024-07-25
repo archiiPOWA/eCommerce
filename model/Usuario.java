@@ -2,7 +2,6 @@ package com.complete.eCommerce.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.aot.generate.GeneratedTypeReference;
 
 import java.util.List;
 
@@ -17,6 +16,7 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String nombre;
+    private String username;
     private String email;
     private String direccion;
     private String telefono;
@@ -33,6 +33,6 @@ public class Usuario {
     private List<Orden> ordenes;
 
 
-
-
+    public Usuario(int i, String cesar, String mail, String s, String s1, String admin, String password123, String string) {
+    }
 }
