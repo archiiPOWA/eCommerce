@@ -2,16 +2,16 @@ package com.complete.eCommerce.controller;
 import com.complete.eCommerce.model.Producto;
 import com.complete.eCommerce.model.Usuario;
 import com.complete.eCommerce.service.ProductoService;
+import com.complete.eCommerce.service.UploadFileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @Controller
@@ -25,6 +25,11 @@ private final Logger LOGGER = LoggerFactory.getLogger(ProductoController.class);
     @Autowired
     private ProductoService productoService;
 
+    //INYECTO EL OBJETO/VARIABLE  para traer los metodos declarados en el Servicio
+    @Autowired
+    private UploadFileService upload;
+
+
     @GetMapping("")
     public String show(Model model){ //el objeto model lleva informacion desde el backend hacia la vista
         model.addAttribute("productos", productoService.findAll());
@@ -37,9 +42,27 @@ private final Logger LOGGER = LoggerFactory.getLogger(ProductoController.class);
     }
 
     @PostMapping("/save")
-    public String save(Producto producto) {
+    public String save(Producto producto, @RequestParam("img") MultipartFile  file) throws IOException {
         LOGGER.info("Este es el objeto producto {}", producto);
         Usuario u = new Usuario (1,"","","","", "", "", "");
+
+        //IMAGEN
+        //hago la logica para subir imagenes al servidor y tambien guardar el nombre de la imagen en la base de datos en tabla producto
+        if(producto.getId()==null){//cuando se crea un producto
+            String nombreImagen = upload.saveImage(file); //---> declaro el file, de tipo MultipartFile en los parametros del metodo
+            producto.setImagen(nombreImagen);
+            }else{
+            if (file.isEmpty()) { // cuando editamos el producto pero no cambiamos la imagen
+                Producto prod = new Producto();
+                prod = productoService.get(producto.getId()).get();
+                producto.setImagen(prod.getImagen());
+                          }else{ //el caso en que cambiamos la imagen al editar el producto
+                String nombreImagen = upload.saveImage(file);
+                producto.setImagen(nombreImagen);
+
+            }
+
+        }
         productoService.save(producto);
         return "redirect:/productos";
     }
