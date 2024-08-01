@@ -10,7 +10,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.util.Optional;
 
@@ -52,15 +51,6 @@ private final Logger LOGGER = LoggerFactory.getLogger(ProductoController.class);
             String nombreImagen = upload.saveImage(file); //---> declaro el file, de tipo MultipartFile en los parametros del metodo
             producto.setImagen(nombreImagen);
             }else{
-            if (file.isEmpty()) { // cuando editamos el producto pero no cambiamos la imagen
-                Producto prod = new Producto();
-                prod = productoService.get(producto.getId()).get();
-                producto.setImagen(prod.getImagen());
-                          }else{ //el caso en que cambiamos la imagen al editar el producto
-                String nombreImagen = upload.saveImage(file);
-                producto.setImagen(nombreImagen);
-
-            }
 
         }
         productoService.save(producto);
@@ -81,13 +71,36 @@ private final Logger LOGGER = LoggerFactory.getLogger(ProductoController.class);
     }
 //ahora creo el metodo para realizar la actualizacion como tal
     @PostMapping("/update")
-    public String update(Producto producto) { //como parametros recibe un objeto producto de tipo producto
+    public String update(Producto producto, @RequestParam("img") MultipartFile  file) throws IOException { //como parametros recibe un objeto producto de tipo producto
+        Producto prod = new Producto();
+        prod = productoService.get(producto.getId()).get();
+
+        if (file.isEmpty()) { // cuando editamos el producto pero no cambiamos la imagen
+
+            producto.setImagen(prod.getImagen());
+        }else{ //el caso en que cambiamos la imagen al editar el producto
+            //aca traigo un fragmento de codigo del metodo Delete
+                       //eliminar cuando no sea la imagen por defecto
+            if (!prod.getImagen().equals ("default.jpg")){
+                upload.deleteImage(prod.getImagen());
+            }
+            String nombreImagen = upload.saveImage(file);
+            producto.setImagen(nombreImagen);
+        }
+        //aca en la clase 18 - refactorizamos el codigo sacando variables locales a globales y solucionamos el problema de traer user_id
+        producto.setUsuario(prod.getUsuario());
         productoService.update(producto);
         return "redirect:/productos";
     }
-    //Seguidamente programamos la funcin para eliminar productos
+    //Seguidamente programamos la funcion para eliminar productos
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Integer id){ //con Pathvariable hacmeos el mapeo de la variable que recibimos en la url  "{id} y la pase al parametro  --> Integer id
+        Producto prod = new Producto();
+        prod = productoService.get(id).get();
+        //eliminar cuando no sea la imagen por defecto
+        if (!prod.getImagen().equals ("default.jpg")){
+            upload.deleteImage(prod.getImagen());
+        }
         productoService.delete(id);
         return "redirect:/productos";
     }
